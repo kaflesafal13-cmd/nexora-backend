@@ -1,0 +1,8 @@
+{
+  "name": "nexora-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Accounts, wallet ledger and top-ups for Nexora Digital",
+  "scripts": { "start": "node --env-file-if-exists=.env server.js" },
+  "engines": { "node": ">=22.13" }
+}
