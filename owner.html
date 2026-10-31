@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nexora Owner Panel</title>
+<style>
+:root{--bg:#0a1f3d;--card:#0f3160;--line:#1f3d6b;--teal:#13A89E;--txt:#eaf1fb;--mut:#9fb3cf;--red:#ff9a9a;--ok:#7be0b6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+h1{font-size:24px;margin:0}h2{font-size:18px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+label{display:block;font-size:14px;color:var(--mut);margin-bottom:10px}
+input{display:block;width:100%;margin-top:4px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:#0a2447;color:var(--txt);font:inherit}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+button,a.btn{cursor:pointer;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:600;background:var(--teal);color:#04222a;text-decoration:none;display:inline-block}
+button.red{background:var(--red);color:#3a0b0b}
+button.ghost,a.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+button.sm{padding:4px 12px}button:disabled{opacity:.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{margin:10px 0 0;font-size:14px;min-height:1.2em}.err{color:var(--red)}.ok{color:var(--ok)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-weight:600}.scroll{overflow-x:auto}
+.pill{cursor:pointer;color:var(--teal);background:none;padding:0;border:0;font-weight:600;text-decoration:underline}
+pre{white-space:pre-wrap;background:#0a2447;border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;font-size:14px}
+.mut{color:var(--mut);font-size:14px}
+</style></head><body><div class="wrap">
+
+<section id="login" class="card" style="max-width:420px;margin:60px auto">
+<h1 style="margin-bottom:6px">Owner login</h1>
+<p class="mut" style="margin-top:0">Nexora Digital owner panel</p>
+<form id="lf" novalidate>
+<label>Username<input id="lu" type="text" autocomplete="username" autocapitalize="none"></label>
+<label>Password<input id="lp" type="password" autocomplete="current-password"></label>
+<p class="msg err" id="le" role="alert"></p>
+<button type="submit">Log in</button>
+</form></section>
+
+<div id="app" hidden>
+<header><h1>Nexora Owner Panel</h1>
+<div class="row"><span class="mut">Signed in as <b id="who"></b></span><a class="btn ghost" href="/">Open website</a><button class="ghost" id="lo" type="button">Log out</button></div></header>
+
+<section class="card"><h2>Add or deduct money</h2>
+<div class="grid">
+<label>Customer username<input id="mu" type="text" maxlength="24" autocapitalize="none" autocomplete="off"></label>
+<label>Amount in Rs (whole number)<input id="ma" type="number" min="1" step="1" inputmode="numeric"></label>
+<label>Note (optional)<input id="mn" type="text" maxlength="200" autocomplete="off"></label>
+</div>
+<div class="row"><button id="madd" type="button">Add money</button><button id="msub" class="red" type="button">Deduct for order</button></div>
+<p class="msg" id="mm" role="alert"></p><div id="mres"></div></section>
+
+<section class="card"><h2>Pending top-up requests</h2><div class="scroll" id="pend"></div></section>
+
+<section class="card"><h2>Customers</h2>
+<label>Search<input id="cs" type="text" placeholder="Type a username" autocapitalize="none" autocomplete="off"></label>
+<div class="scroll" id="cust"></div><p class="mut">Click a username to fill it in above.</p></section>
+
+<section class="card"><h2>All transactions</h2>
+<label>Filter by customer username (optional)<input id="tfu" type="text" maxlength="24" autocapitalize="none" autocomplete="off"></label>
+<div class="row" style="margin-bottom:12px"><button id="tfs" type="button">Show transactions</button><button id="tfd" class="ghost" type="button">Download CSV</button></div>
+<div class="scroll" id="txs"></div></section>
+</div>
+</div>
+<script>
+function $(i){return document.getElementById(i)}
+function api(m,u,b){return fetch(u,{method:m,credentials:'same-origin',headers:b?{'Content-Type':'application/json'}:{},body:b?JSON.stringify(b):undefined}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok)throw new Error(d.error||'Something went wrong. Try again.');return d})},function(){throw new Error(location.protocol==='file:'?'Open this page through the Nexora server (http://localhost:3000/owner.html), not as a file.':'Cannot reach the Nexora server. Check that it is running.')})}
+function el(t,txt,cls){var e=document.createElement(t);if(txt!=null)e.textContent=txt;if(cls)e.className=cls;return e}
+function table(c,heads,rows){c.textContent='';if(!rows.length){c.appendChild(el('p','Nothing here yet.','mut'));return}var t=el('table'),h=t.insertRow();heads.forEach(function(x){h.appendChild(el('th',x))});rows.forEach(function(r){var tr=t.insertRow();r.forEach(function(v){var td=tr.insertCell();if(v&&v.nodeType)td.appendChild(v);else td.textContent=v})});c.appendChild(t)}
+var IK=null,TXS=[],USERS=[];
+function showApp(ok){$('login').hidden=ok;$('app').hidden=!ok}
+function enter(m){if(m.role!=='admin'){$('le').textContent='This is not the owner account.';api('POST','/api/logout',{}).catch(function(){});showApp(false);return}$('who').textContent=m.username;showApp(true);refresh()}
+function refresh(){loadPending();loadUsers();loadTx()}
+$('lf').addEventListener('submit',function(ev){ev.preventDefault();$('le').textContent='';api('POST','/api/login',{username:$('lu').value.trim(),password:$('lp').value}).then(function(m){$('lp').value='';enter(m)}).catch(function(e){$('le').textContent=e.message})});
+$('lo').addEventListener('click',function(){api('POST','/api/logout',{}).catch(function(){}).then(function(){showApp(false)})});
+function loadPending(){api('GET','/api/admin/topup-requests?status=pending').then(function(d){table($('pend'),['ID','Customer','Amount','Method','Date',''],d.requests.map(function(q){var box=el('span');[['Approve','approve',''],['Reject','reject',' red']].forEach(function(b){var x=el('button',b[0],'sm'+b[2]);x.type='button';x.style.marginRight='6px';x.addEventListener('click',function(){if(!confirm(b[0]+' request #'+q.id+' ('+q.username+', Rs '+q.amount+')?'))return;x.disabled=true;api('POST','/api/admin/topup-requests/'+q.id+'/'+b[1],{}).then(function(o){if(b[1]==='approve')result(o.username,'Rs '+o.amount+' has been added to your Nexora Wallet.',o.balance);refresh()}).catch(function(e){$('mm').className='msg err';$('mm').textContent=e.message;x.disabled=false})});box.appendChild(x)});return ['#'+q.id,q.username,'Rs '+q.amount,q.method,q.created_at,box]}))}).catch(function(e){$('pend').textContent=e.message})}
+function loadUsers(){api('GET','/api/admin/users').then(function(d){USERS=d.users;drawUsers()}).catch(function(e){$('cust').textContent=e.message})}
+function drawUsers(){var f=$('cs').value.trim().toLowerCase();table($('cust'),['Username','Balance','Joined'],USERS.filter(function(u){return !f||u.username.indexOf(f)>-1}).map(function(u){var b=el('button',u.username+(u.role==='admin'?' (owner)':''),'pill');b.type='button';b.addEventListener('click',function(){$('mu').value=u.username;$('ma').focus();window.scrollTo(0,0)});return [b,'Rs '+u.balance.toLocaleString('en-US'),u.created_at.slice(0,10)]}))}
+$('cs').addEventListener('input',drawUsers);
+function loadTx(){var u=$('tfu').value.trim().toLowerCase();api('GET','/api/admin/transactions'+(u?'?username='+encodeURIComponent(u):'')).then(function(d){TXS=d.transactions;table($('txs'),['Date','Customer','Type','Amount','Balance after','Note'],TXS.map(function(x){return [x.created_at,x.username,x.type==='credit'?'Added':'Deducted',(x.type==='credit'?'+':'-')+'Rs '+x.amount,'Rs '+x.balance_after,x.note||x.method||'']}))}).catch(function(e){$('txs').textContent=e.message})}
+$('tfs').addEventListener('click',loadTx);
+function csvCell(v){v=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'}
+$('tfd').addEventListener('click',function(){var rows=[['id','date','customer','type','amount','balance_after','method','reference','note']].concat(TXS.map(function(x){return [x.id,x.created_at,x.username,x.type,x.amount,x.balance_after,x.method,x.reference,x.note]}));var b=new Blob([rows.map(function(r){return r.map(csvCell).join(',')}).join('\r\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='nexora-transactions.csv';document.body.appendChild(a);a.click();a.remove()});
+function result(u,what,bal){var r=$('mres');r.textContent='';var m='Hello '+u+', '+what+' Your balance is now Rs '+bal+'.';r.appendChild(el('pre',m));var a=el('a','Send on WhatsApp','btn');a.target='_blank';a.rel='noopener';a.href='https://wa.me/?text='+encodeURIComponent(m);r.appendChild(a)}
+function adj(sign){var u=$('mu').value.trim().toLowerCase(),a=Number($('ma').value),e=$('mm');e.className='msg err';
+if(!/^[a-z0-9_.]{3,24}$/.test(u)){e.textContent='Enter the customer username.';return}
+if(!Number.isInteger(a)||a<1){e.textContent='Enter a whole amount above 0.';return}
+if(!confirm((sign>0?'Add Rs '+a+' to ':'Deduct Rs '+a+' from ')+u+'?'))return;
+IK=IK||(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random());e.className='msg';e.textContent='Updating...';
+api('POST','/api/admin/users/'+encodeURIComponent(u)+(sign>0?'/credit':'/debit'),{amount:a,note:$('mn').value.trim(),idempotencyKey:IK}).then(function(d){IK=null;e.className='msg ok';e.textContent='Done. New balance: Rs '+d.balance;$('ma').value='';$('mn').value='';result(u,'Rs '+a+(sign>0?' has been added to your Nexora Wallet.':' has been deducted from your Nexora Wallet for your order.'),d.balance);refresh()}).catch(function(x){e.className='msg err';e.textContent=x.message})}
+['mu','ma','mn'].forEach(function(i){$(i).addEventListener('input',function(){IK=null;$('mm').textContent=''})});
+$('madd').addEventListener('click',function(){adj(1)});$('msub').addEventListener('click',function(){adj(-1)});
+api('GET','/api/me').then(enter).catch(function(){showApp(false)});
+</script></body></html>
